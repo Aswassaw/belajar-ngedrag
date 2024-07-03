@@ -1,6 +1,15 @@
 import { useState } from "react";
-import { DndContext, DragEndEvent, closestCorners } from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
+import {
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { FaCheckSquare } from "react-icons/fa";
 import Column from "./components/Column/Column";
 
@@ -13,13 +22,25 @@ export interface ITask {
 
 export default function App() {
   const [tasks, setTasks] = useState<ITask[]>([
-    { id: 1, title: "Manusia Api" },
-    { id: 2, title: "Manusia Petir" },
-    { id: 3, title: "Manusia Tanah" },
+    { id: 1, title: "Push rank ML sampai immortal" },
+    { id: 2, title: "Ngoding sampai mata perih" },
+    { id: 3, title: "Istirahat sampai lelah" },
   ]);
 
   const getTaskPosition = (id: TId) =>
     tasks.findIndex((task) => task.id === id);
+
+  const addTask = (title: string) => {
+    setTasks((tasks) => {
+      return [
+        ...tasks,
+        {
+          id: new Date().getTime(),
+          title,
+        },
+      ];
+    });
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -39,14 +60,26 @@ export default function App() {
     }
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(TouchSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   return (
     <div className="container mx-auto">
       <div className="flex justify-center items-center gap-3 my-5">
         <h1 className="text-3xl text-center font-bold">My Tasks</h1>
         <FaCheckSquare className="text-4xl text-green-600" />
       </div>
-      <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCorners}>
-        <Column tasks={tasks} />
+      <DndContext
+        collisionDetection={closestCorners}
+        sensors={sensors}
+        onDragEnd={handleDragEnd}
+      >
+        <Column tasks={tasks} addTask={addTask} />
       </DndContext>
     </div>
   );
